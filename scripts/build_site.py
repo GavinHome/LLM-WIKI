@@ -503,6 +503,20 @@ def write_redirect_index() -> None:
     (SITE / "index.html").write_text(html_text, encoding="utf-8")
 
 
+def copy_raw_assets() -> int:
+    count = 0
+    for source in (ROOT / "raw").rglob("*"):
+        if not source.is_file() or source.suffix == ".md":
+            continue
+        if any(part.startswith(".") for part in source.relative_to(ROOT).parts):
+            continue
+        target = SITE / source.relative_to(ROOT)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        count += 1
+    return count
+
+
 def main() -> None:
     if SITE.exists():
         shutil.rmtree(SITE)
@@ -519,8 +533,9 @@ def main() -> None:
 
     write_css()
     write_redirect_index()
+    asset_count = copy_raw_assets()
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
-    print(f"Built {len(files)} pages in {SITE.relative_to(ROOT)}")
+    print(f"Built {len(files)} pages and copied {asset_count} raw assets in {SITE.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

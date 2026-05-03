@@ -9,6 +9,7 @@ linked from that note.
 | Source | Type | Status | Wiki pages |
 | --- | --- | --- | --- |
 | [Karpathy-style LLM Wiki source note](../../raw/examples/karpathy-llm-wiki-note.md) | Note | Distilled | [LLM Wiki Pattern](../concepts/llm-wiki-pattern.md) |
+| [MedGRPO paper note](../../raw/papers/MedGRPO：Multi-Task Reinforcement Learning for Heterogeneous Medical Video Understanding.md) | Paper | Distilled | [MedGRPO](../papers/medgrpo.md) |
 
 ## Status Values
 

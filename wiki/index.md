@@ -8,6 +8,10 @@ This is the entry point for the curated wiki.
 
 - [LLM Wiki Pattern](concepts/llm-wiki-pattern.md)
 
+## Papers
+
+- [MedGRPO](papers/medgrpo.md)
+
 ## Source Catalog
 
 - [Source Catalog](sources/source-catalog.md)
