@@ -6,7 +6,7 @@ Karpathy's "LLM Wiki" pattern.
 The goal is to keep raw source material separate from distilled wiki pages:
 
 - `raw/` stores original inputs: notes, transcripts, articles, papers, code
-  readings, meeting notes, and copied source excerpts.
+  readings, meeting notes, books, PDFs, EPUBs, and copied source excerpts.
 - `wiki/` stores curated Markdown pages written and maintained by an LLM.
 - `templates/` stores reusable source and wiki page templates.
 - `scripts/` stores lightweight maintenance tools.
@@ -14,9 +14,11 @@ The goal is to keep raw source material separate from distilled wiki pages:
 ## Workflow
 
 1. Add source material under `raw/`.
-2. Ask an LLM agent to read the relevant files and update `wiki/`.
-3. Keep every important wiki claim traceable to source files in `raw/`.
-4. Run the checker before committing:
+2. For papers and books, keep the PDF/EPUB and add a companion note from
+   `templates/paper-note.md` or `templates/book-note.md`.
+3. Ask an LLM agent to read the relevant files and update `wiki/`.
+4. Keep every important wiki claim traceable to source files in `raw/`.
+5. Run the checker before committing:
 
 ```bash
 python3 scripts/wiki_check.py

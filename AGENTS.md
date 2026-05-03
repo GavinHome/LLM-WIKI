@@ -9,6 +9,8 @@ not a chat transcript.
   explicitly asks for cleanup.
 - `wiki/` contains synthesized knowledge. Update these pages when new source
   material changes the understanding of a topic.
+- PDFs and EPUBs should usually have a companion Markdown note in `raw/papers/`
+  or `raw/books/` before their claims are distilled into `wiki/`.
 - If a wiki statement is important, non-obvious, or factual, cite at least one
   source file from `raw/`.
 

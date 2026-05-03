@@ -1,9 +1,10 @@
 # Source Note: <title>
 
-Source type: <article | paper | transcript | meeting | code | note>
+Source type: <article | paper | book | transcript | meeting | code | note>
 Date captured: YYYY-MM-DD
 Author/source:
 URL:
+Local file:
 
 ## Context
 

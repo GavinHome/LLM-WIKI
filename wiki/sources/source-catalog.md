@@ -2,11 +2,13 @@
 
 Last updated: 2026-05-03
 
-This page tracks important raw sources and their wiki coverage.
+This page tracks important raw sources and their wiki coverage. For PDFs and
+EPUBs, list the Markdown companion note as the source and keep the original file
+linked from that note.
 
-| Source | Status | Wiki pages |
-| --- | --- | --- |
-| [Karpathy-style LLM Wiki source note](../../raw/examples/karpathy-llm-wiki-note.md) | Distilled | [LLM Wiki Pattern](../concepts/llm-wiki-pattern.md) |
+| Source | Type | Status | Wiki pages |
+| --- | --- | --- | --- |
+| [Karpathy-style LLM Wiki source note](../../raw/examples/karpathy-llm-wiki-note.md) | Note | Distilled | [LLM Wiki Pattern](../concepts/llm-wiki-pattern.md) |
 
 ## Status Values
 
