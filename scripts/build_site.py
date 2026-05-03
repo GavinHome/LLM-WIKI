@@ -8,6 +8,7 @@ build the site without package installation.
 from __future__ import annotations
 
 import html
+import os
 import re
 import shutil
 from pathlib import Path
@@ -15,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "_site"
 CONTENT_ROOTS = ("wiki", "raw")
+NAV_ROOT = "wiki"
 
 LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 INLINE_CODE_RE = re.compile(r"`([^`]+)`")
@@ -25,11 +27,67 @@ def site_path_for(source: Path) -> Path:
     return (SITE / rel).with_suffix(".html")
 
 
-def display_path(source: Path) -> str:
+def href_from(source: Path, target: Path) -> str:
+    source_dir = site_path_for(source).parent
+    return os.path.relpath(target, source_dir).replace(os.sep, "/")
+
+
+def page_title(source: Path) -> str:
     rel = source.relative_to(ROOT)
     if rel == Path("wiki/index.md"):
-        return "Home"
-    return str(rel.with_suffix("")).replace("/", " / ")
+        return "Wiki Index"
+    text = source.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return source.stem.replace("-", " ").title()
+
+
+def nav_group(source: Path) -> str:
+    rel = source.relative_to(ROOT)
+    if rel == Path("wiki/index.md"):
+        return "Start"
+    parts = rel.parts
+    if len(parts) >= 2 and parts[0] == "wiki":
+        return parts[1].replace("-", " ").title()
+    return parts[0].replace("-", " ").title()
+
+
+def render_nav(files: list[Path], current: Path) -> str:
+    nav_files = [
+        file
+        for file in files
+        if file.relative_to(ROOT).parts[0] == NAV_ROOT
+    ]
+    nav_files.sort(key=lambda file: (nav_group(file), page_title(file)))
+
+    groups: dict[str, list[Path]] = {}
+    for file in nav_files:
+        groups.setdefault(nav_group(file), []).append(file)
+
+    ordered_groups = sorted(groups)
+    if "Start" in ordered_groups:
+        ordered_groups.remove("Start")
+        ordered_groups.insert(0, "Start")
+
+    sections: list[str] = []
+    for group in ordered_groups:
+        links = []
+        for file in groups[group]:
+            href = site_path_for(file).relative_to(SITE)
+            active = " active" if file == current else ""
+            links.append(
+                f'<a class="nav-link{active}" href="{html.escape(href_from(current, SITE / href), quote=True)}">'
+                f"{html.escape(page_title(file))}</a>"
+            )
+        sections.append(
+            '<section class="nav-section">'
+            f'<div class="nav-heading">{html.escape(group)}</div>'
+            f'{"".join(links)}'
+            '</section>'
+        )
+
+    return "\n".join(sections)
 
 
 def convert_link(target: str) -> str:
@@ -171,16 +229,13 @@ def render_markdown(markdown: str) -> str:
 
 
 def render_page(source: Path, files: list[Path]) -> str:
-    title = source.stem.replace("-", " ").title()
+    title = page_title(source)
     body = render_markdown(source.read_text(encoding="utf-8"))
-    nav_items = []
-    for file in files:
-        href = site_path_for(file).relative_to(SITE)
-        nav_items.append(
-            f'<a href="/LLM-WIKI/{html.escape(str(href), quote=True)}">'
-            f"{html.escape(display_path(file))}</a>"
-        )
-    nav = "\n".join(nav_items)
+    nav = render_nav(files, source)
+    rel_source = source.relative_to(ROOT)
+    source_kind = "Source" if rel_source.parts[0] == "raw" else "Wiki"
+    home_href = href_from(source, SITE / "wiki" / "index.html")
+    css_href = href_from(source, SITE / "assets" / "site.css")
 
     return f"""<!doctype html>
 <html lang="zh-CN">
@@ -188,15 +243,20 @@ def render_page(source: Path, files: list[Path]) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(title)} · LLM Wiki</title>
-  <link rel="stylesheet" href="/LLM-WIKI/assets/site.css">
+  <link rel="stylesheet" href="{html.escape(css_href, quote=True)}">
 </head>
 <body>
   <aside class="sidebar">
-    <a class="brand" href="/LLM-WIKI/wiki/index.html">LLM Wiki</a>
+    <div class="brand-block">
+      <a class="brand" href="{html.escape(home_href, quote=True)}">LLM Wiki</a>
+      <div class="tagline">Curated notes and source-backed knowledge.</div>
+    </div>
     <nav>{nav}</nav>
   </aside>
   <main class="content">
-    <div class="path">{html.escape(str(source.relative_to(ROOT)))}</div>
+    <header class="page-header">
+      <div class="eyebrow">{html.escape(source_kind)} · {html.escape(str(rel_source))}</div>
+    </header>
     <article>
 {body}
     </article>
@@ -210,13 +270,16 @@ def write_css() -> None:
     css = """
 :root {
   color-scheme: light;
-  --bg: #fbfaf7;
-  --panel: #f1eee8;
-  --text: #24211d;
-  --muted: #6d665e;
-  --line: #ded8cf;
-  --accent: #276b5d;
-  --code: #eee9df;
+  --bg: #fcfcfb;
+  --sidebar: #f5f3ef;
+  --surface: #ffffff;
+  --text: #1f2523;
+  --muted: #6c746f;
+  --faint: #929a95;
+  --line: #e3e0d8;
+  --accent: #16695f;
+  --accent-soft: #e6f1ee;
+  --code: #f0eee8;
 }
 
 * {
@@ -226,7 +289,7 @@ def write_css() -> None:
 body {
   margin: 0;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
@@ -246,48 +309,84 @@ a {
   height: 100vh;
   overflow: auto;
   border-right: 1px solid var(--line);
-  background: var(--panel);
-  padding: 24px 18px;
+  background: var(--sidebar);
+  padding: 30px 22px;
+}
+
+.brand-block {
+  margin-bottom: 30px;
 }
 
 .brand {
   display: block;
-  margin-bottom: 20px;
   color: var(--text);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   text-decoration: none;
 }
 
-nav {
-  display: grid;
-  gap: 6px;
+.tagline {
+  margin-top: 8px;
+  max-width: 220px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-nav a {
-  border-radius: 6px;
-  padding: 7px 8px;
+nav {
+  display: grid;
+  gap: 22px;
+}
+
+.nav-section {
+  display: grid;
+  gap: 4px;
+}
+
+.nav-heading {
+  margin-bottom: 5px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  border-radius: 8px;
+  padding: 8px 10px;
   color: var(--muted);
+  font-size: 15px;
+  font-weight: 520;
+  line-height: 1.35;
   text-decoration: none;
 }
 
-nav a:hover {
-  background: rgba(39, 107, 93, 0.08);
+.nav-link:hover,
+.nav-link.active {
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
 .content {
-  width: min(100%, 920px);
-  padding: 48px 40px 80px;
+  width: min(100%, 980px);
+  padding: 64px 56px 96px;
 }
 
-.path {
-  margin-bottom: 18px;
-  color: var(--muted);
-  font-size: 13px;
+.page-header {
+  margin-bottom: 14px;
+}
+
+.eyebrow {
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 article {
+  max-width: 820px;
   font-size: 17px;
 }
 
@@ -298,13 +397,29 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
   margin-top: 0;
-  font-size: 42px;
+  margin-bottom: 22px;
+  font-size: 44px;
+  letter-spacing: 0;
 }
 
 h2 {
   border-top: 1px solid var(--line);
-  padding-top: 24px;
-  font-size: 26px;
+  margin-top: 44px;
+  padding-top: 28px;
+  font-size: 25px;
+}
+
+p {
+  margin: 0 0 18px;
+}
+
+ul {
+  margin: 12px 0 22px;
+  padding-left: 24px;
+}
+
+li + li {
+  margin-top: 7px;
 }
 
 code {
@@ -341,7 +456,7 @@ th, td {
 }
 
 th {
-  background: var(--panel);
+  background: var(--sidebar);
 }
 
 @media (max-width: 760px) {
@@ -376,12 +491,12 @@ def write_redirect_index() -> None:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=/LLM-WIKI/wiki/index.html">
+  <meta http-equiv="refresh" content="0; url=wiki/index.html">
   <title>LLM Wiki</title>
-  <link rel="canonical" href="/LLM-WIKI/wiki/index.html">
+  <link rel="canonical" href="wiki/index.html">
 </head>
 <body>
-  <p><a href="/LLM-WIKI/wiki/index.html">Open LLM Wiki</a></p>
+  <p><a href="wiki/index.html">Open LLM Wiki</a></p>
 </body>
 </html>
 """
