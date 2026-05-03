@@ -22,10 +22,30 @@ The goal is to keep raw source material separate from distilled wiki pages:
 python3 scripts/wiki_check.py
 ```
 
+## Website
+
+This repo can publish the curated wiki as a GitHub Pages site. The source of
+truth remains Markdown, and `scripts/build_site.py` generates static HTML in
+`_site/`.
+
+After GitHub Pages deploys, the site is available at:
+
+https://gavinhome.github.io/LLM-WIKI/
+
+Build locally:
+
+```bash
+python3 scripts/build_site.py
+```
+
+When changes are pushed to `main`, `.github/workflows/pages.yml` checks links,
+builds the site, and deploys it to GitHub Pages.
+
 ## Directory Layout
 
 ```text
 .
+├── .github/
 ├── AGENTS.md
 ├── README.md
 ├── raw/
