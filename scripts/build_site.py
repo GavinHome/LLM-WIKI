@@ -247,11 +247,16 @@ def render_page(source: Path, files: list[Path]) -> str:
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand-block">
-      <a class="brand" href="{html.escape(home_href, quote=True)}">LLM Wiki</a>
-      <div class="tagline">Curated notes and source-backed knowledge.</div>
-    </div>
-    <nav>{nav}</nav>
+    <details class="nav-panel" open>
+      <summary>
+        <span class="brand-block">
+          <a class="brand" href="{html.escape(home_href, quote=True)}">LLM Wiki</a>
+          <span class="tagline">Curated notes and source-backed knowledge.</span>
+        </span>
+        <span class="menu-label">Menu</span>
+      </summary>
+      <nav>{nav}</nav>
+    </details>
   </aside>
   <main class="content">
     <header class="page-header">
@@ -261,6 +266,15 @@ def render_page(source: Path, files: list[Path]) -> str:
 {body}
     </article>
   </main>
+  <script>
+    const navPanel = document.querySelector('.nav-panel');
+    const mobileQuery = window.matchMedia('(max-width: 760px)');
+    function syncNavigationState() {{
+      navPanel.toggleAttribute('open', !mobileQuery.matches);
+    }}
+    syncNavigationState();
+    mobileQuery.addEventListener('change', syncNavigationState);
+  </script>
 </body>
 </html>
 """
@@ -295,6 +309,7 @@ body {
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
 }
 
 a {
@@ -314,6 +329,7 @@ a {
 }
 
 .brand-block {
+  display: block;
   margin-bottom: 30px;
 }
 
@@ -326,11 +342,24 @@ a {
 }
 
 .tagline {
+  display: block;
   margin-top: 8px;
   max-width: 220px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.nav-panel summary {
+  list-style: none;
+}
+
+.nav-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-label {
+  display: none;
 }
 
 nav {
@@ -446,6 +475,9 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin: 20px 0;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 th, td {
@@ -465,18 +497,121 @@ th {
   }
 
   .sidebar {
-    position: relative;
+    position: sticky;
     height: auto;
+    z-index: 10;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    padding: 0;
+  }
+
+  .nav-panel {
+    background: rgba(245, 243, 239, 0.96);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-panel:not([open]) nav {
+    display: none;
+  }
+
+  .nav-panel summary {
+    display: flex;
+    min-height: 64px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 18px;
+  }
+
+  .brand-block {
+    margin-bottom: 0;
+  }
+
+  .brand {
+    font-size: 19px;
+  }
+
+  .tagline {
+    display: none;
+  }
+
+  .menu-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  nav {
+    border-top: 1px solid var(--line);
+    gap: 16px;
+    max-height: 70vh;
+    overflow: auto;
+    padding: 18px;
+  }
+
+  .nav-link {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
   }
 
   .content {
-    padding: 32px 20px 56px;
+    padding: 30px 18px 56px;
+  }
+
+  .eyebrow {
+    overflow-wrap: anywhere;
   }
 
   h1 {
-    font-size: 34px;
+    font-size: 32px;
+    line-height: 1.12;
+  }
+
+  h2 {
+    margin-top: 34px;
+    padding-top: 22px;
+    font-size: 23px;
+  }
+
+  article {
+    font-size: 16px;
+  }
+
+  p {
+    margin-bottom: 16px;
+  }
+
+  ul {
+    padding-left: 20px;
+  }
+
+  pre {
+    margin-left: -2px;
+    margin-right: -2px;
+    border-radius: 7px;
+    padding: 12px;
+  }
+
+  table {
+    margin: 16px -18px 22px;
+    width: calc(100% + 36px);
+    border-left: 0;
+    border-right: 0;
+  }
+
+  th,
+  td {
+    padding: 9px 10px;
+    font-size: 14px;
   }
 }
 """
